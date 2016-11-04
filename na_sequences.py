@@ -169,20 +169,21 @@ def orf_finder(seq, stop_at_end=False):
 
 def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
                              gap_ext_penalty):
-    """
+    """Returns an alignment of two strings 'seq_a' and 'seq_b'.
 
     :param seq_a: sequence to align
     :param seq_b: sequence to align
-    :param scoring_matrix: dictionary of all pairs of chars and their penalty
+    :param scoring_matrix: dict of all char pairs and their score increment
     :param gap_beg_penalty: penalty for beginning of gap
-    :param gap_ext_penalty: panalty for extending the gap
-    :return:
+    :param gap_ext_penalty: penalty for extending gap
+    :return: (a,b,d), where a and b are aligned sequences 'seq_a' and 'seq_b',
+    d is maximum alignment score
     """
 
     M = defaultdict(lambda : float('-inf'))
     M_prev = {}
 
-    M[(0,0,0)] = 0
+    M[(0, 0, 0)] = 0
 
     for i, j in utils.n_dim_cube_iterator(len(seq_a) + 1, len(seq_b) + 1):
 
@@ -195,7 +196,7 @@ def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
         )
 
         M[(i, j, 1)], M_prev[(i, j, 1)] = max(
-            (M[(i, j-1, 1)] - gap_ext_penalty, (i, j-1, -1)),
+            (M[(i, j-1, 1)] - gap_ext_penalty, (i, j-1, 1)),
             (M[(i, j-1, 0)] - gap_beg_penalty - gap_ext_penalty, (i, j-1, 0))
         )
 

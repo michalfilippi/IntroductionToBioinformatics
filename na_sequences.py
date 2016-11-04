@@ -169,7 +169,7 @@ def orf_finder(seq, stop_at_end=False):
 
 def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
                              gap_ext_penalty):
-    """Returns an alignment of two strings 'seq_a' and 'seq_b'.
+    """Returns a global alignment of two strings 'seq_a' and 'seq_b'.
 
     :param seq_a: sequence to align
     :param seq_b: sequence to align
@@ -204,11 +204,10 @@ def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
             (M[(i, j, -1)], (i, j, -1)),
             (M[(i, j, 1)], (i, j, 1)),
             (M[(i-1, j-1, 0)] + scoring_matrix[(seq_a[i-1], seq_b[j-1])],
-             (i-1, j-1, 0)),
+             (i-1, j-1, 0))
         )
 
     # trace back optimal alignment
-
     seq_a_aligned = []
     seq_b_aligned = []
     i, j, k = len(seq_a), len(seq_b), 0
@@ -226,4 +225,66 @@ def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
             M[(len(seq_a), len(seq_b), 0)])
 
 
+def optimal_local_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
+                             gap_ext_penalty):
+    """Returns a local alignment of two strings 'seq_a' and 'seq_b'.
 
+    :param seq_a: sequence to align
+    :param seq_b: sequence to align
+    :param scoring_matrix: dict of all char pairs and their score increment
+    :param gap_beg_penalty: penalty for beginning of gap
+    :param gap_ext_penalty: penalty for extending gap
+    :return: (a,b,d), where a and b are substrings of 'seq_a' and 'seq_b' with
+    maximum alignment score and d is maximum local alignment score
+    """
+
+    M = defaultdict(lambda: float('-inf'))
+    M_prev = {}
+
+    M[(0, 0, 0)] = 0
+
+    global_max = (float('-inf'), None)
+
+    for i, j in utils.n_dim_cube_iterator(len(seq_a) + 1, len(seq_b) + 1):
+
+        if (i, j) == (0, 0):
+            continue
+
+        M[(i, j, -1)], M_prev[(i, j, -1)] = max(
+            (M[(i-1, j, -1)] - gap_ext_penalty, (i-1, j, -1)),
+            (M[(i-1, j, 0)] - gap_beg_penalty - gap_ext_penalty, (i-1, j, 0))
+        )
+
+        M[(i, j, 1)], M_prev[(i, j, 1)] = max(
+            (M[(i, j-1, 1)] - gap_ext_penalty, (i, j-1, 1)),
+            (M[(i, j-1, 0)] - gap_beg_penalty - gap_ext_penalty, (i, j-1, 0))
+        )
+
+        M[(i, j, 0)], M_prev[(i, j, 0)] = max(
+            (0, (0, 0, 0)),
+            (M[(i, j, -1)], (i, j, -1)),
+            (M[(i, j, 1)], (i, j, 1)),
+            (M[(i-1, j-1, 0)] + scoring_matrix[(seq_a[i-1], seq_b[j-1])],
+             (i-1, j-1, 0))
+        )
+
+        global_max = max(global_max, (M[i, j, 0], (i, j, 0)))
+
+    # trace back optimal local alignment
+    seq_a_substring = []
+    seq_b_substring = []
+    i, j, k = global_max[1]
+    while M[(i, j, k)] > 0:
+        l, m, n = M_prev[(i, j, k)]
+
+        if (l, m) != (i, j):
+            if k != 1:
+                seq_a_substring.append(seq_a[l])
+            if k != -1:
+                seq_b_substring.append(seq_b[m])
+
+        i, j, k = l, m, n
+
+    return (''.join(reversed(seq_a_substring)),
+            ''.join(reversed(seq_b_substring)),
+            global_max[0])

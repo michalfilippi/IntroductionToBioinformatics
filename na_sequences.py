@@ -1,8 +1,10 @@
-def reverse(seq):
-    """
+from . import utils
 
-    :param seq:
-    :return:
+def reverse(seq):
+    """Returns reversed sequence.
+
+    :param seq: sequence
+    :return: reversed sequence
     """
 
     return seq[::-1]
@@ -16,19 +18,19 @@ dna_complement_mapping = {
 dna_complement_mapping_table = str.maketrans(dna_complement_mapping)
 
 def dna_complement(seq):
-    """
+    """Returns complement sequence.
 
-    :param seq:
-    :return:
+    :param seq: DNA sequence
+    :return: complement sequence
     """
 
     return seq.translate(dna_complement_mapping_table)
 
 def dna_reverse_complement(seq):
-    """
+    """Returns reversed complement sequence.
 
-    :param seq:
-    :return:
+    :param seq: DNA sequence
+    :return: reversed complement sequence
     """
 
     return dna_complement(reverse(seq))
@@ -42,19 +44,19 @@ rna_complement_mapping = {
 rna_complement_mapping_table = str.maketrans(rna_complement_mapping)
 
 def rna_complement(seq):
-    """
+    """Returns complement sequence.
 
-    :param seq:
-    :return:
+    :param seq: RNA sequence
+    :return: complement sequence
     """
 
     return seq.translate(rna_complement_mapping_table)
 
 def rna_reverse_complement(seq):
-    """
+    """Returns reversed complement sequence.
 
-    :param seq:
-    :return:
+    :param seq: RNA sequence
+    :return: reversed complement sequence
     """
 
     return rna_complement(reverse(seq))
@@ -111,7 +113,7 @@ def rna2ps(seq, stop=None):
     return "".join(proteins)
 
 def dna2rna(seq):
-    """
+    """Translates RNA sequence into DNA sequence.
 
     :param seq: DNA string
     :return: RNA string
@@ -121,7 +123,7 @@ def dna2rna(seq):
 
 
 def rna2dna(seq):
-    """
+    """Translates DNA sequence into RNA sequence.
 
     :param seq: RNA string
     :return: DNA string
@@ -130,10 +132,10 @@ def rna2dna(seq):
     return seq.replace('U', 'T')
 
 def orf_simple_finder(seq, stop_at_end = False):
-    """
+    """Finds ORF an given side of RNA sequence and with no alignment.
 
     :param seq: RNA string
-    :param stop_at_end:
+    :param stop_at_end: True if end of sequence is considered as end of ORF
     :return: list of all tuples (S,E), where S is a start of ORF and E is the end
     """
 
@@ -160,11 +162,11 @@ def orf_simple_finder(seq, stop_at_end = False):
     return orf_positions
 
 def orf_finded(seq, stop_at_end = False):
-    """
+    """Finds ORF an both sides of RNA sequence and with all alignments.
 
     :param seq: RNA string
-    :param stop_at_end:
-    :return:
+    :param stop_at_end: True if end of sequence is considered as end of ORF
+    :return: list of all tuples (S,E), where S is a start of ORF and E is the end
     """
 
     orf_positions = []
@@ -184,6 +186,12 @@ def orf_finded(seq, stop_at_end = False):
 
 
 def optimal_alignment(s, t):
+    """Finds optimal global alignment of two given strings 's', 't'.
+
+    :param s:
+    :param t:
+    :return:
+    """
 
     m = [[None]*(len(s) + 1) for _ in range(len(t) + 1)]
 
@@ -233,8 +241,22 @@ def optimal_alignment(s, t):
     return ''.join(reverse(alignment_s)), ''.join(reverse(alignment_t)), m[len(t)][len(s)][0]
 
 
-def optimal_alignment(scoring_matrix, gap_penalty_function, *sequences):
-    pass
+
+
+def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
+                             gap_ext_penalty):
+    """
+
+    :param seq_a: sequence to align
+    :param seq_b: sequence to align
+    :param scoring_matrix: dictionary of all pairs of chars and their penalty
+    :param gap_beg_penalty: penalty for beginning of gap
+    :param gap_ext_penalty: panalty for extending the gap
+    :return:
+    """
+
+
+    return None
 
 
 

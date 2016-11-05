@@ -7,12 +7,12 @@ def n_dim_cube_iterator(*lengths):
     """
 
     if len(lengths) == 0:
-        yield []
+        yield tuple()
         return
 
     for i in range(lengths[0]):
         for pos in n_dim_cube_iterator(*lengths[1:]):
-            yield [i] + pos
+            yield (i,) + pos
 
 
 def n_dim_cube_predecessors(position):
@@ -25,11 +25,11 @@ def n_dim_cube_predecessors(position):
     """
 
     if len(position) == 0:
-        yield []
+        yield tuple()
         return
 
     for pos in n_dim_cube_predecessors(position[1:]):
-        yield [position[0]] + pos
+        yield (position[0],) + pos
         if position[0] - 1 >= 0:
-            yield [position[0] - 1] + pos
+            yield (position[0] - 1,) + pos
 

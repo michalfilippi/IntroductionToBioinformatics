@@ -1,4 +1,5 @@
 from collections import defaultdict
+import itertools
 
 from . import utils
 from . import constant_tables
@@ -180,7 +181,7 @@ def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
     d is maximum alignment score
     """
 
-    M = defaultdict(lambda : float('-inf'))
+    M = defaultdict(lambda: float('-inf'))
     M_prev = {}
 
     M[(0, 0, 0)] = 0
@@ -226,7 +227,7 @@ def optimal_global_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
 
 
 def optimal_local_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
-                             gap_ext_penalty):
+                            gap_ext_penalty):
     """Returns a local alignment of two strings 'seq_a' and 'seq_b'.
 
     :param seq_a: sequence to align
@@ -288,3 +289,55 @@ def optimal_local_alignment(seq_a, seq_b, scoring_matrix, gap_beg_penalty,
     return (''.join(reversed(seq_a_substring)),
             ''.join(reversed(seq_b_substring)),
             global_max[0])
+
+
+def optimal_global_alignment_m(scoring_matrix, *sequences):
+    """Returns a global alignment of arbitrary number of sequences.
+
+    :param scoring_matrix: dict of all char pairs and their score increment
+    :param sequences: sequences to align
+    :return: (d, s), where s is a list of aligned sequences and d is maximum
+    global alignment score.
+    """
+
+    M = defaultdict(lambda: float('-inf'))
+    M_prev = {}
+
+    init_pos = (0,)*len(sequences)
+    M[init_pos] = 0
+
+    for pos in utils.n_dim_cube_iterator(*[len(seq) + 1 for seq in sequences]):
+        if pos == init_pos:
+            continue
+
+        possible_predecessors = []
+        for predecessor in utils.n_dim_cube_predecessors(pos):
+            if predecessor == pos:
+                continue
+
+            chars = ['-' if p1 == p2 else seq[p2]
+                     for p1, p2, seq in zip(pos, predecessor, sequences)]
+
+            score = sum([scoring_matrix[(c_1, c_2)]
+                         for c_1, c_2 in itertools.combinations(chars, 2)])
+
+            possible_predecessors.append((M[predecessor] + score, predecessor))
+
+        M[pos], M_prev[pos] = max(possible_predecessors)
+
+    # trace back optimal alignment
+    sequences_aligned = [[] for _ in sequences]
+    pos = tuple([len(seq) for seq in sequences])
+    while pos != init_pos:
+        prev_pos = M_prev[pos]
+
+        if prev_pos != pos:
+            chars = ['-' if p1 == p2 else seq[p2]
+                     for p1, p2, seq in zip(pos, prev_pos, sequences)]
+            for seq, c in zip(sequences_aligned, chars):
+                seq.append(c)
+
+        pos = prev_pos
+
+    return (M[tuple([len(seq) for seq in sequences])],
+            [''.join(reversed(seq)) for seq in sequences_aligned])

@@ -14,13 +14,13 @@ class HMM():
 
         return prob
 
-    def output_prob_given_path(path, output):
+    def output_prob_given_path(self, path, output):
         prob = 1
         for o, s in zip(output, path):
             prob *= self.emission_matrix[s][o]
 
         return prob
 
-    def most_probably_path_given_output(output):
+    def most_probably_path_given_output(self, output):
         pass
 

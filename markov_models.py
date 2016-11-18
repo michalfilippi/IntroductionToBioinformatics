@@ -1,4 +1,5 @@
-
+import collections
+import itertools
 
 class HMM:
     """Class for representation of hidden markov models.
@@ -55,6 +56,7 @@ class HMM:
         :return: tuple (path, prob), where path is the most probable path over
         states and prob is it's probability
         """
+
         probs = dict()
         prev = dict()
         states = list(self.transition_matrix.keys())
@@ -91,3 +93,113 @@ class HMM:
             reversed_path.append(current[0])
 
         return ''.join(reversed(reversed_path)), prob
+
+    def states(self):
+        """Returns unordered list of all possible states of HMM.
+
+        :return: list of all possible states of HMM
+        """
+
+        return list(self.transition_matrix.keys())
+
+    def alphabet(self):
+        """Returns unordered list of characters being emitted from states of
+        HMM. It might not return all the characters if the emission matrix is
+        not complete.... too lazy to do it properly now. :) (ToDo)
+
+        :return: list of characters being emitted from states of HMM
+        """
+
+        return list(self.emission_matrix[self.states()[0]].keys())
+
+    def viterbi_learning(self, output, iterations):
+        """Method for training HMM to fit given output as best as possible.
+        Both probability matrices need to be already initialized .
+
+        :param output: given output of HMM
+        :param iterations: number of learning iterations
+        :return: None
+        """
+
+        for _ in range(iterations):
+            path = self.most_probable_path_given_output(output)[0]
+
+            new_tr_matrix = dict()
+            new_em_matrix = dict()
+
+            counter_em = collections.Counter(zip(path, output))
+            for st in self.states():
+                new_em_matrix[st] = dict()
+                s = 0
+
+                # estimate probabilities
+                for c in self.alphabet():
+                    new_em_matrix[st][c] = counter_em[(st,c)]
+                    s += new_em_matrix[st][c]
+
+                # normalize probabilities
+                for c in self.alphabet():
+                    if s != 0:
+                        new_em_matrix[st][c] /= s
+                    else:
+                        # uniform distribution
+                        new_em_matrix[st][c] = 1 / len(self.alphabet())
+
+            counter_tr = collections.Counter(zip(path[:-1], path[1:]))
+            for st_1 in self.states():
+                new_tr_matrix[st_1] = dict()
+                s = 0
+
+                # estimate probabilities
+                for st_2 in self.states():
+                    new_tr_matrix[st_1][st_2] = counter_tr[(st_1, st_2)]
+                    s += new_tr_matrix[st_1][st_2]
+
+                # normalize probabilities
+                for st_2 in self.states():
+                    if s != 0:
+                        new_tr_matrix[st_1][st_2] /= s
+                    else:
+                        # uniform distribution
+                        new_tr_matrix[st_1][st_2] = 1 / len(self.states())
+
+            # update matrices
+            self.transition_matrix = new_tr_matrix
+            self.emission_matrix = new_em_matrix
+
+
+    def __str__(self):
+        """Converts HMM into string using the same notation as HMM problems on
+        rosalind.
+
+        :return: human readable description of HMM as string
+        """
+
+        output = []
+        for state in sorted(self.states()):
+            output.append(state)
+            output.append("\t")
+        output.append('\n')
+        for state_1 in sorted(self.states()):
+            output.append(state_1)
+            output.append("\t")
+            for state_2 in sorted(self.states()):
+                prob = round(self.transition_matrix[state_1][state_2], 3)
+                output.append(str(prob))
+                output.append("\t")
+            output.append("\n")
+        output.append("--------\n")
+        for c in sorted(self.alphabet()):
+            output.append('\t')
+            output.append(c)
+        output.append("\n")
+        for state in sorted(self.states()):
+            output.append(state)
+            output.append("\t")
+            for c in sorted(self.alphabet()):
+                prob = round(self.emission_matrix[state][c], 3)
+                output.append(str(prob))
+                output.append('\t')
+            output.append("\n")
+        return ''.join(output)
+

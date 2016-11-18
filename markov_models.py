@@ -113,8 +113,9 @@ class HMM:
         return list(self.emission_matrix[self.states()[0]].keys())
 
     def viterbi_learning(self, output, iterations):
-        """Method for training HMM to fit given output as best as possible.
-        Both probability matrices need to be already initialized .
+        """Method for training HMM to fit given output as best as possible
+        using Viterbi learning method. Both probability matrices need to be
+        already initialized.
 
         :param output: given output of HMM
         :param iterations: number of learning iterations
@@ -167,6 +168,18 @@ class HMM:
             self.transition_matrix = new_tr_matrix
             self.emission_matrix = new_em_matrix
 
+    def baum_welch_learning(self, output, iterations):
+        """Method for training HMM to fit given output as best as possible
+        using Baum-Welch learning method. Both probability matrices need to be
+        already initialized.
+
+        :param output: given output of HMM
+        :param iterations: number of learning iterations
+        :return: None
+        """
+
+        for _ in range(iterations):
+            pass
 
     def __str__(self):
         """Converts HMM into string using the same notation as HMM problems on

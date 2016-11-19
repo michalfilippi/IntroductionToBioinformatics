@@ -168,10 +168,49 @@ class HMM:
             self.transition_matrix = new_tr_matrix
             self.emission_matrix = new_em_matrix
 
+    def forward_filtering(self, output):
+        """Calculates probability distributions for P(X_i=s|output[:i]) for
+        all i and s.
+
+        :param output: observed output of HMM
+        :return: dictionary of probability distributions for P(X_i=s|output[:i])
+        """
+        states = self.states()
+        p = dict()
+
+        for i, c in enumerate(output):
+            normalization_sum = 0
+
+            if i == 0:
+                for state in states:
+                    # use uniform distribution for initial states
+                    prob = 1 / len(states) * self.emission_matrix[state][c]
+                    p[(i, state)] = prob
+                    normalization_sum += prob
+
+            else:
+                for s in states:
+                    prob = 0
+                    for prev_s in states:
+                        prob += self.transition_matrix[prev_s][s] * p[(i - 1, prev_s)]
+                    prob *= self.emission_matrix[s][c]
+                    p[(i, s)] = prob
+                    normalization_sum += prob
+
+            # normalize probabilities
+            for s in states:
+                p[(i, s)] /= normalization_sum
+
+        return p
+
+    def backward_filtering(self, output):
+        pass
+
     def baum_welch_learning(self, output, iterations):
         """Method for training HMM to fit given output as best as possible
         using Baum-Welch learning method. Both probability matrices need to be
         already initialized.
+        https://en.wikipedia.org/wiki/Baum%E2%80%93Welch_algorithm
 
         :param output: given output of HMM
         :param iterations: number of learning iterations

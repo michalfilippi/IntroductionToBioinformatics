@@ -175,6 +175,7 @@ class HMM:
         :param output: observed output of HMM
         :return: dictionary of probability distributions for P(X_i=s|output[:i])
         """
+
         states = self.states()
         p = dict()
 
@@ -204,7 +205,36 @@ class HMM:
         return p
 
     def backward_filtering(self, output):
-        pass
+        """Calculates probability distributions for P(X_i=s|output[i+1:]) for
+        all i and s.
+
+        :param output: observed output of HMM
+        :return: dictionary of probability distributions for
+        P(X_i=s|output[i+1:])
+        """
+
+        states = self.states()
+        p = dict()
+
+        for state in states:
+            p[(len(output) - 1, state)] = 1
+
+        for i, c in reversed(list(enumerate(output))):
+            normalization_sum = 0
+
+            for s in states:
+                prob = 0
+                for next_s in states:
+                    prob += p[(i, next_s)] * self.transition_matrix[s][
+                        next_s] * self.emission_matrix[next_s][c]
+                p[(i - 1, s)] = prob
+                normalization_sum += prob
+
+            # normalize probabilities
+            for s in states:
+                p[(i - 1, s)] /= normalization_sum
+
+        return p
 
     def baum_welch_learning(self, output, iterations):
         """Method for training HMM to fit given output as best as possible

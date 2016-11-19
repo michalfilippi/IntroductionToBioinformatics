@@ -1,5 +1,5 @@
 import collections
-import itertools
+
 
 class HMM:
     """Class for representation of hidden markov models.
@@ -88,7 +88,7 @@ class HMM:
         prob, current = max(end_nodes)
         reversed_path.append(current[0])
 
-        while current[1] != 0 :
+        while current[1] != 0:
             current = prev[current]
             reversed_path.append(current[0])
 
@@ -135,7 +135,7 @@ class HMM:
 
                 # estimate probabilities
                 for c in self.alphabet():
-                    new_em_matrix[st][c] = counter_em[(st,c)]
+                    new_em_matrix[st][c] = counter_em[(st, c)]
                     s += new_em_matrix[st][c]
 
                 # normalize probabilities
@@ -193,7 +193,8 @@ class HMM:
                 for s in states:
                     prob = 0
                     for prev_s in states:
-                        prob += self.transition_matrix[prev_s][s] * p[(i - 1, prev_s)]
+                        prob += (self.transition_matrix[prev_s][s] *
+                                 p[(i - 1, prev_s)])
                     prob *= self.emission_matrix[s][c]
                     p[(i, s)] = prob
                     normalization_sum += prob
@@ -225,8 +226,9 @@ class HMM:
             for s in states:
                 prob = 0
                 for next_s in states:
-                    prob += p[(i, next_s)] * self.transition_matrix[s][
-                        next_s] * self.emission_matrix[next_s][c]
+                    prob += (p[(i, next_s)] *
+                             self.transition_matrix[s][next_s] *
+                             self.emission_matrix[next_s][c])
                 p[(i - 1, s)] = prob
                 normalization_sum += prob
 

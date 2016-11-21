@@ -1,4 +1,5 @@
 import collections
+import itertools
 
 
 class HMM:
@@ -249,8 +250,68 @@ class HMM:
         :return: None
         """
 
+        states = self.states()
+        len_o = len(output)
+
         for _ in range(iterations):
-            pass
+            f_filtering = self.forward_filtering(output)
+            b_filtering = self.backward_filtering(output)
+
+            new_tr_matrix = dict()
+            new_em_matrix = dict()
+
+            gamma = dict()
+            xi = dict()
+
+            # calculate gamma
+            for t in range(len_o):
+                normalization_sum = 0
+                for s in states:
+                    gamma[(t, s)] = f_filtering[(t, s)] * b_filtering[(t, s)]
+                    normalization_sum += gamma[(t, s)]
+
+                # normalize
+                for s in states:
+                    gamma[(t, s)] /= normalization_sum
+
+            # calculate xi
+            for t in range(len_o - 1):
+                normalization_sum = 0
+                for s_1, s_2 in itertools.product(states, repeat=2):
+                    xi[(t, s_1, s_2)] = (f_filtering[(t, s_1)] *
+                                         self.transition_matrix[s_1][s_2] *
+                                         b_filtering[(t + 1, s_2)] *
+                                         self.emission_matrix[s_2][output[t + 1]])
+                    normalization_sum += xi[(t, s_1, s_2)]
+
+                # normalize
+                for s_1, s_2 in itertools.product(states, repeat=2):
+                    xi[(t, s_1, s_2)] /= normalization_sum
+
+            # calculate new transition matrix
+            for s_1, s_2 in itertools.product(states, repeat=2):
+                sum_gamma = sum([gamma[(t, s_1)] for t in range(len_o - 1)])
+                sum_xi = sum([xi[(t, s_1, s_2)] for t in range(len_o - 1)])
+                if s_1 not in new_tr_matrix:
+                    new_tr_matrix[s_1] = dict()
+                new_tr_matrix[s_1][s_2] = sum_xi / sum_gamma
+
+            # calculate new emission matrix
+            for s in states:
+                gamma_s = [gamma[(t, s)] for t in range(len_o)]
+                normalization_sum = sum(gamma_s)
+                new_em_matrix[s] = dict()
+
+                for c in self.alphabet():
+                    fil_gamma_s = map(lambda x: x[0] ,
+                                      filter(lambda x: x[1] == c,
+                                             zip(gamma_s, output)))
+                    t = sum(fil_gamma_s)
+                    new_em_matrix[s][c] = t / normalization_sum
+
+            # update matrices
+            self.transition_matrix = new_tr_matrix
+            self.emission_matrix = new_em_matrix
 
     def __str__(self):
         """Converts HMM into string using the same notation as HMM problems on

@@ -264,6 +264,7 @@ class HMM:
             xi = dict()
 
             # calculate gamma
+            # gamma[(t, s)] = P(X_t = s | output)
             for t in range(len_o):
                 normalization_sum = 0
                 for s in states:
@@ -275,6 +276,7 @@ class HMM:
                     gamma[(t, s)] /= normalization_sum
 
             # calculate xi
+            # xi[(t, s_1, s_2)] = P(X_t = s_1, X_t+1 = s_2 | output)
             for t in range(len_o - 1):
                 normalization_sum = 0
                 for s_1, s_2 in itertools.product(states, repeat=2):
@@ -303,11 +305,9 @@ class HMM:
                 new_em_matrix[s] = dict()
 
                 for c in self.alphabet():
-                    fil_gamma_s = map(lambda x: x[0] ,
-                                      filter(lambda x: x[1] == c,
-                                             zip(gamma_s, output)))
-                    t = sum(fil_gamma_s)
-                    new_em_matrix[s][c] = t / normalization_sum
+                    fil_gamma_s = map(lambda x: x[0] if x[1] == c else 0,
+                                      zip(gamma_s, output))
+                    new_em_matrix[s][c] = sum(fil_gamma_s) / normalization_sum
 
             # update matrices
             self.transition_matrix = new_tr_matrix

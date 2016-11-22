@@ -169,12 +169,14 @@ class HMM:
             self.transition_matrix = new_tr_matrix
             self.emission_matrix = new_em_matrix
 
-    def forward_filtering(self, output):
-        """Calculates probability distributions for P(X_i=s|output[:i]) for
-        all i and s.
+    def forward_filtering(self, output, normalize=True):
+        """Calculates probability distributions for
+        P(X_i=s, output[:i] | HMM) for all i and s.
 
         :param output: observed output of HMM
-        :return: dictionary of probability distributions for P(X_i=s|output[:i])
+        :param normalize: True if probabilities should be normalized
+        :return: dictionary of probability distributions for
+        P(X_i=s, output[:i] | HMM)
         """
 
         states = self.states()
@@ -201,18 +203,19 @@ class HMM:
                     normalization_sum += prob
 
             # normalize probabilities
-            for s in states:
-                p[(i, s)] /= normalization_sum
+            if normalize:
+                for s in states:
+                    p[(i, s)] /= normalization_sum
 
         return p
 
     def backward_filtering(self, output):
-        """Calculates probability distributions for P(X_i=s|output[i+1:]) for
-        all i and s.
+        """Calculates probability distributions for P(output[i+1:] | X_i=s, HMM)
+        for all i and s.
 
         :param output: observed output of HMM
         :return: dictionary of probability distributions for
-        P(X_i=s|output[i+1:])
+        P(output[i+1:] | X_i=s, HMM)
         """
 
         states = self.states()
@@ -312,6 +315,16 @@ class HMM:
             # update matrices
             self.transition_matrix = new_tr_matrix
             self.emission_matrix = new_em_matrix
+
+    def output_prob(self, output):
+        """Calculates P(output | HMM).
+
+        :param output: given observed sequence
+        :return: probability of output
+        """
+
+        f_filtering = self.forward_filtering(output, False)
+        return sum([f_filtering[(len(output) - 1, s)] for s in self.states()])
 
     def __str__(self):
         """Converts HMM into string using the same notation as HMM problems on

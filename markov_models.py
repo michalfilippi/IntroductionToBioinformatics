@@ -272,6 +272,7 @@ class HMM:
 
             new_tr_matrix = dict()
             new_em_matrix = dict()
+            new_init_states = dict()
 
             gamma = dict()
             xi = dict()
@@ -322,9 +323,14 @@ class HMM:
                                       zip(gamma_s, output))
                     new_em_matrix[s][c] = sum(fil_gamma_s) / normalization_sum
 
+            # calculate new init state distributions
+            for s in states:
+                new_init_states[s] = gamma[(0, s)]
+
             # update matrices
             self.transition_matrix = new_tr_matrix
             self.emission_matrix = new_em_matrix
+            self.init_state_dist = new_init_states
 
     def output_prob(self, output):
         """Calculates P(output | HMM).

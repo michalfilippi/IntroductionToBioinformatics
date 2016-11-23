@@ -6,16 +6,25 @@ class HMM:
     """Class for representation of hidden markov models.
     """
 
-    def __init__(self, transition_matrix, emission_matrix):
+    def __init__(self, transition_matrix, emission_matrix,
+                 init_state_dist=None):
         """
         :param transition_matrix: dictionary of dictionaries representing
         probability matrix for transitions
         :param emission_matrix: dictionary of dictionaries representing
         probability matrix for emissions
+        :param init_state_dist: dictionary of probabilities for state to be
+        initial state, if None then uniform distribution is used
         """
 
         self.transition_matrix = transition_matrix
         self.emission_matrix = emission_matrix
+        if init_state_dist == None:
+            self.init_state_dist = dict()
+            for state in transition_matrix:
+                self.init_state_dist[state] = 1 / len(transition_matrix)
+        else:
+            self.init_state_dist = init_state_dist
 
     def path_prob(self, path):
         """Calculates probability of given path using probability matrix for
@@ -25,7 +34,7 @@ class HMM:
         :return: probability of given path
         """
 
-        prob = 1 / len(self.transition_matrix)
+        prob = self.init_state_dist[path[0]]
         prev = path[0]
         for curr in path[1:]:
             prob *= self.transition_matrix[prev][curr]
@@ -64,7 +73,7 @@ class HMM:
 
         for state in states:
             emiss_prob = self.emission_matrix[state][output[0]]
-            probs[(state, 0)] = 1 / len(self.transition_matrix) * emiss_prob
+            probs[(state, 0)] = self.init_state_dist[state] * emiss_prob
 
         for i, o in enumerate(output):
             if i == 0:
@@ -132,17 +141,17 @@ class HMM:
             counter_em = collections.Counter(zip(path, output))
             for st in self.states():
                 new_em_matrix[st] = dict()
-                s = 0
+                normalization_sum = 0
 
                 # estimate probabilities
                 for c in self.alphabet():
                     new_em_matrix[st][c] = counter_em[(st, c)]
-                    s += new_em_matrix[st][c]
+                    normalization_sum += new_em_matrix[st][c]
 
                 # normalize probabilities
                 for c in self.alphabet():
-                    if s != 0:
-                        new_em_matrix[st][c] /= s
+                    if normalization_sum != 0:
+                        new_em_matrix[st][c] /= normalization_sum
                     else:
                         # uniform distribution
                         new_em_matrix[st][c] = 1 / len(self.alphabet())
@@ -150,17 +159,17 @@ class HMM:
             counter_tr = collections.Counter(zip(path[:-1], path[1:]))
             for st_1 in self.states():
                 new_tr_matrix[st_1] = dict()
-                s = 0
+                normalization_sum = 0
 
                 # estimate probabilities
                 for st_2 in self.states():
                     new_tr_matrix[st_1][st_2] = counter_tr[(st_1, st_2)]
-                    s += new_tr_matrix[st_1][st_2]
+                    normalization_sum += new_tr_matrix[st_1][st_2]
 
                 # normalize probabilities
                 for st_2 in self.states():
-                    if s != 0:
-                        new_tr_matrix[st_1][st_2] /= s
+                    if normalization_sum != 0:
+                        new_tr_matrix[st_1][st_2] /= normalization_sum
                     else:
                         # uniform distribution
                         new_tr_matrix[st_1][st_2] = 1 / len(self.states())
@@ -188,7 +197,8 @@ class HMM:
             if i == 0:
                 for state in states:
                     # use uniform distribution for initial states
-                    prob = 1 / len(states) * self.emission_matrix[state][c]
+                    prob = (self.init_state_dist[state] *
+                            self.emission_matrix[state][c])
                     p[(i, state)] = prob
                     normalization_sum += prob
 
